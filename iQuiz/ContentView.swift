@@ -75,33 +75,47 @@ struct ContentView: View {
     }
 
     func loadQuizzes() {
-        guard let url = URL(string: "http://tednewardsandbox.site44.com/questions.json") else {
-            print("Invalid URL")
-            return
-        }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Error fetching data: \(error)")
+            guard let url = URL(string: "http://tednewardsandbox.site44.com/questions.json") else {
+                print("Invalid URL")
                 return
             }
             
-            guard let data = data else {
-                print("No data returned")
-                return
-            }
-            
-            do {
-                let decodedResponse = try JSONDecoder().decode([QuizTopic].self, from: data)
-                DispatchQueue.main.async {
-                    self.quizTopics = decodedResponse
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("Error fetching data: \(error)")
+                    return
                 }
-            } catch {
-                print("Error decoding data: \(error)")
-            }
-        }.resume()
+                
+                guard let data = data else {
+                    print("No data returned")
+                    return
+                }
+                
+                do {
+                    var decodedResponse = try JSONDecoder().decode([QuizTopic].self, from: data)
+                    // Assign SF Symbols to each quiz topic based on the title
+                    for index in decodedResponse.indices {
+                        switch decodedResponse[index].title {
+                        case "Mathematics":
+                            decodedResponse[index].iconName = "function"
+                        case "Science!":
+                            decodedResponse[index].iconName = "leaf.arrow.circlepath"
+                        case "Marvel Super Heroes":
+                            decodedResponse[index].iconName = "star.circle"
+                        default:
+                            decodedResponse[index].iconName = "questionmark.circle"
+                        }
+                    }
+                    DispatchQueue.main.async {
+                        self.quizTopics = decodedResponse
+                    }
+                } catch {
+                    print("Error decoding data: \(error)")
+                }
+            }.resume()
+        }
     }
-}
+
 
 struct QuestionView: View {
     @State private var currentQuestionIndex = 0
